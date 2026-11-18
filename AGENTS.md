@@ -74,6 +74,8 @@ Missing required checks or independent review yield PARTIAL/BLOCKED, not SUCCESS
 
 For each project report original/target versions, disposition, evidence and
 discovery matrix, actual checks, reviewer findings and remaining manual tests.
-Open a new PR against Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2
-master from its own branch. Never add maintenance changes to a cleanup PR.
+TEST FORK ONLY: open a new PR inside
+hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 against
+test/idweb-harness-e2e from its own branch. Never target upstream or master and
+never add maintenance changes to a cleanup PR.
 Human execution approval and human merge approval remain separate requirements.

@@ -1,5 +1,23 @@
 # IdWeb Sample Maintenance Harness
 
+## Test Branch Override
+
+This checkout is an isolated integration test in
+hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 on
+test/idweb-harness-e2e. The upstream deployment instructions below describe the
+original harness PR, not this test's activation. Only hossnrabbit may dispatch
+this branch, and only Microsoft.Identity.Web.UI 3.8.2 is approved for the test.
+The companion ADO branch is test/idweb-pipeline-e2e in
+IdentityDivision/DevEx/msal-sdk-sample-maintenance. Its only enabled destination
+is this fork/test branch. Push runs the hosted harness checks and exact source
+setup; it does not create an issue or assign Copilot. The release workflow also
+has a branch-scoped push registration event whose issue job is deliberately
+skipped; actual issue creation requires workflow_dispatch. No default branch,
+upstream PR, secret, actor variable or approval policy is changed for this test.
+Copilot's automatic import of custom setup from a non-default branch is NOT
+assumed proven by a successful standalone setup run. Assignment remains optional
+and requires separate eligibility/secret configuration; never fall back upstream.
+
 This opt-in harness belongs to
 Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2, targeting master.
 It is a separate change from cleanup PR #831 and can operate on either layout.

@@ -15,5 +15,5 @@ Run offline checks and original-manifest validation; build only on an approved
 host. Invoke sample-reviewer with evidence, actual diff, planner matrix and actual
 check results. Allow one repair and two review passes. Do not self-approve or invent
 role execution. Missing evidence/review/checks means BLOCKED/PARTIAL. Report NOT RUN
-for live authentication and unexecuted tests. Open a separate PR targeting master;
+for live authentication and unexecuted tests. Open a separate fork-only PR targeting test/idweb-harness-e2e;
 never append to a cleanup PR, merge, enable auto-merge or alter workflow approvals.

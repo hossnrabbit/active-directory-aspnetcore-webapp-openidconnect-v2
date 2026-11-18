@@ -1,6 +1,9 @@
 name: Release maintenance issue
 
 on:
+  push:
+    branches: [test/idweb-harness-e2e]
+    paths: [.github/workflows/release-maintenance.yml]
   workflow_dispatch:
     inputs:
       package:
@@ -35,13 +38,13 @@ concurrency:
 
 jobs:
   open-issue:
-    if: ${{ github.repository == 'Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2' && github.ref == 'refs/heads/master' && vars.MAINTENANCE_DISPATCH_ACTOR != '' && github.actor == vars.MAINTENANCE_DISPATCH_ACTOR }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.repository == 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2' && github.ref == 'refs/heads/test/idweb-harness-e2e' && github.actor == 'hossnrabbit' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
         with:
-          ref: master
+          ref: test/idweb-harness-e2e
           persist-credentials: false
       - name: Create or reuse an exact-release issue
         id: release-issue
@@ -51,8 +54,8 @@ jobs:
           RELEASE_VERSION: ${{ inputs.version }}
           RELEASE_URL: ${{ inputs.release_notes_url }}
           EVENT_KEY: ${{ inputs.event_key }}
-          APPROVED_PACKAGE: ${{ vars.MAINTENANCE_PACKAGE }}
-          APPROVED_VERSION: ${{ vars.MAINTENANCE_TARGET_VERSION }}
+          APPROVED_PACKAGE: Microsoft.Identity.Web.UI
+          APPROVED_VERSION: 3.8.2
         with:
           script: |
             const crypto = require('node:crypto');
@@ -98,7 +101,7 @@ jobs:
                 'Compare public contracts, implementation, tests and new parameters/defaults/options across both exact IdWeb source revisions. Produce the required scenario-improvement matrix with source/test citations, coverage and candidate dispositions; release notes or compatibility alone are insufficient.',
                 'Keep excluded/newer projects, other package references, frameworks, flows, settings and harness files unchanged. Never add MSAL references. Coordinated package migrations require maintainer-approved scope.',
                 'Run offline tests and original-manifest validation with -ExpectedVersion ' + version + '. Require hosted builds and independent review; clearly report every NOT RUN/PARTIAL/BLOCKED check. Do not execute SDK code or live authentication.',
-                'Open a NEW PR against this upstream repository master, never append to a cleanup PR. Do not merge, enable auto-merge or alter approval policies.',
+                'TEST FORK ONLY: open any maintenance PR in hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 against test/idweb-harness-e2e, never upstream or a cleanup PR. Do not merge, enable auto-merge or alter approval policies.',
                 'Human workflow execution approval and human merge approval remain required according to existing policy.'
               ].join('\n\n')
             });

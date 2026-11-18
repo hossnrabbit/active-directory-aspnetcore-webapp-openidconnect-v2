@@ -1,6 +1,9 @@
 name: Copilot setup steps
 
 on:
+  push:
+    branches: [test/idweb-harness-e2e]
+    paths: [.github/workflows/copilot-setup-steps.yml]
   workflow_dispatch:
   pull_request:
     paths: [.github/workflows/copilot-setup-steps.yml]
@@ -25,8 +28,8 @@ jobs:
       - name: Prepare configured exact-release IdWeb evidence
         shell: pwsh
         env:
-          MAINTENANCE_PACKAGE: ${{ vars.MAINTENANCE_PACKAGE }}
-          MAINTENANCE_TARGET_VERSION: ${{ vars.MAINTENANCE_TARGET_VERSION }}
+          MAINTENANCE_PACKAGE: Microsoft.Identity.Web.UI
+          MAINTENANCE_TARGET_VERSION: 3.8.2
         run: |
           if (!$env:MAINTENANCE_PACKAGE -or !$env:MAINTENANCE_TARGET_VERSION) {
             Write-Host 'SETUP_BLOCKED for release tasks: configure MAINTENANCE_PACKAGE and MAINTENANCE_TARGET_VERSION. No source was downloaded.'

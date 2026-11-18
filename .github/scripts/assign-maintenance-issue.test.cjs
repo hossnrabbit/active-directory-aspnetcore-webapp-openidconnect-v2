@@ -15,18 +15,18 @@ function fixture(overrides = {}, events = []) {
       return { data: { assignees: [{ login: bot }] } };
     }
   };
-  return { calls, args: { github, context: { repo: { owner: 'Azure-Samples',
+  return { calls, args: { github, context: { repo: { owner: 'hossnrabbit',
     repo: 'active-directory-aspnetcore-webapp-openidconnect-v2' } },
     core: { notice() {} }, issueNumber: 42 } };
 }
 
-test('assigns the upstream master branch and bounded implementer without retries', async () => {
+test('assigns only the fork test branch and bounded implementer without retries', async () => {
   const { calls, args } = fixture();
   await assignIssue(args);
   assert.equal(calls.length, 1);
   assert.deepEqual(calls[0].payload.agent_assignment, {
-    target_repo: 'Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2',
-    base_branch: 'master', custom_agent: 'sample-implementer'
+    target_repo: 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2',
+    base_branch: 'test/idweb-harness-e2e', custom_agent: 'sample-implementer'
   });
   assert.equal(calls[0].payload.request.retries, 0);
 });
@@ -52,11 +52,11 @@ for (const [name, overrides] of [
     await assert.rejects(assignIssue(args), /Only workflow-created/);
   });
 }
-test('rejects fork or invalid issue number', async () => {
+test('rejects upstream or invalid issue number', async () => {
   const { args } = fixture();
-  await assert.rejects(assignIssue({ ...args, issueNumber: 0 }), /upstream sample/);
-  args.context.repo.owner = 'hossnrabbit';
-  await assert.rejects(assignIssue(args), /upstream sample/);
+  await assert.rejects(assignIssue({ ...args, issueNumber: 0 }), /approved test fork/);
+  args.context.repo.owner = 'Azure-Samples';
+  await assert.rejects(assignIssue(args), /approved test fork/);
 });
 test('fails if GitHub does not confirm assignment', async () => {
   const { args } = fixture();

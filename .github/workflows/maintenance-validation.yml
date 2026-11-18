@@ -1,8 +1,10 @@
 name: Maintenance validation
 
 on:
+  push:
+    branches: [test/idweb-harness-e2e]
   pull_request:
-    branches: [master]
+    branches: [test/idweb-harness-e2e]
   workflow_dispatch:
 
 permissions:
