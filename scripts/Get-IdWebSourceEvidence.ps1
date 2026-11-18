@@ -43,7 +43,7 @@ try {
         & git -c credential.helper= -c http.extraHeader= -C $sourcePath fetch --quiet --depth=1 $repositoryUrl "refs/tags/$version`:refs/tags/$version"
         if ($LASTEXITCODE -ne 0) { throw "SETUP_BLOCKED: cannot fetch exact IdWeb tag $version." }
         $tagCommit = (& git -C $sourcePath rev-parse "$version^{commit}").Trim()
-        if ($LASTEXITCODE -ne 0 -or $tagCommit -ine $commit) { throw "SETUP_BLOCKED: NuGet/tag provenance mismatch for $Package $version; do not substitute another revision." }
+        if ($LASTEXITCODE -ne 0 -or $tagCommit -ine $commit) { throw "SETUP_BLOCKED: NuGet/tag provenance mismatch for $Package $version (NuGet commit $commit; tag commit $tagCommit); do not substitute another revision." }
         $checkout = Join-Path $evidencePath $version
         & git -C $sourcePath worktree add --quiet --detach $checkout $commit
         if ($LASTEXITCODE -ne 0) { throw 'Cannot materialize exact-release source.' }

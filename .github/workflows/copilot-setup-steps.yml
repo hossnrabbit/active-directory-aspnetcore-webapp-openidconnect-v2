@@ -26,6 +26,7 @@ jobs:
         shell: pwsh
         run: ./scripts/Test-Maintenance.ps1
       - name: Prepare configured exact-release IdWeb evidence
+        id: source-evidence
         shell: pwsh
         env:
           MAINTENANCE_PACKAGE: Microsoft.Identity.Web.UI
@@ -39,3 +40,7 @@ jobs:
           if (!(Test-Path .maintenance-evidence/manifest.json)) { throw 'SETUP_BLOCKED: source manifest was not prepared.' }
           git check-ignore --quiet .maintenance-evidence/manifest.json
           if ($LASTEXITCODE -ne 0) { throw 'Source evidence must remain ignored.' }
+      - name: Diagnose original baseline provenance without substituting evidence
+        if: ${{ failure() && steps.source-evidence.outcome == 'failure' }}
+        shell: pwsh
+        run: ./scripts/Get-IdWebSourceEvidence.ps1 -Package Microsoft.Identity.Web.UI -TargetVersion 3.7.0 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'idweb-baseline-diagnostic')
