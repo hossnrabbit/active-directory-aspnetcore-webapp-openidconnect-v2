@@ -6,17 +6,62 @@ This checkout is an isolated integration test in
 hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 on
 test/idweb-harness-e2e. The upstream deployment instructions below describe the
 original harness PR, not this test's activation. Only hossnrabbit may dispatch
-this branch, and only Microsoft.Identity.Web.UI 3.8.2 is approved for the test.
+this branch. Manual execution remains pinned to Microsoft.Identity.Web.UI 3.8.2;
+discovery may report newer stable UI releases without approving execution.
 The companion ADO branch is test/idweb-pipeline-e2e in
 IdentityDivision/DevEx/msal-sdk-sample-maintenance. Its only enabled destination
 is this fork/test branch. Push runs the hosted harness checks and exact source
 setup; it does not create an issue or assign Copilot. The release workflow also
 has a branch-scoped push registration event whose issue job is deliberately
-skipped; actual issue creation requires workflow_dispatch. No default branch,
+skipped; test-branch issue creation requires workflow_dispatch. No default branch,
 upstream PR, secret, actor variable or approval policy is changed for this test.
 Copilot's automatic import of custom setup from a non-default branch is NOT
 assumed proven by a successful standalone setup run. Assignment remains optional
 and requires separate eligibility/secret configuration; never fall back upstream.
+
+## GitHub-Only Discovery Test
+
+MSAL.NET discovery is separate: `hossnrabbit/ms-identity-docs-code-dotnet` on
+`test/msal-harness-e2e` checks `Microsoft.Identity.Client` against its five
+direct-MSAL samples. This fork checks `Microsoft.Identity.Web.UI`; do not route
+MSAL releases into IdWeb updates or add direct MSAL references here.
+
+Run release-maintenance.yml against test/idweb-harness-e2e with
+detect_latest=true and dry_run=true. Leave package, version, release_notes_url
+and event_key empty, and assign_copilot=false. The hosted runner queries only
+the public NuGet version index for Microsoft.Identity.Web.UI, selects the highest
+three-part stable version numerically, and compares direct references in retained
+catalog projects. It does not download packages/source, build samples, edit sample
+code or access credentials. Feed errors fail the run rather than imply no updates.
+The summary reports the version and number of outdated retained projects.
+
+Repeat with dry_run=false to create or reuse an Actions-bot maintenance issue
+only when an outdated retained reference exists. Open and closed issues share
+the existing repository/package/version deduplication marker, including issues
+created through manual release dispatch. All issue-creation runs are serialized.
+Support/excluded projects are not selected, prereleases are ignored, and newer
+references are never downgraded. No update means no issue. Scheduled discovery
+does not need the ADO coordinator, its service connection, or a custom token.
+
+The weekday schedule is 07:23 UTC, but it is INACTIVE on this non-default branch.
+The fork/test-ref/actor guard also intentionally prevents execution on master or
+upstream. Activating a real schedule requires separate approval for default-branch
+installation and guard changes. Keep workflow_dispatch for manual testing;
+GitHub schedules can be delayed, and public-repository schedules disable after
+60 days of inactivity. Do not change the default branch to bypass this boundary.
+
+Discovery rejects assign_copilot=true and conflicting manual release inputs.
+dry_run suppresses assignment even for a manually supplied approved release.
+Detected issues are proposals, not source-update approval: the candidate release
+URL has not been verified, exact setup remains pinned to 3.8.2, and the known
+provenance mismatch still blocks evidence-dependent work. Automatic code changes
+remain unavailable until supported no-PAT Copilot authentication, matching setup,
+and provenance are approved and verified. This is not end-to-end automation yet.
+
+Offline regression: run scripts/Test-MaintenanceRelease.ps1. Its NuGet requests
+are mocked; it checks numeric ordering, prerelease filtering, retained-project
+selection, no-downgrade behavior, the package allowlist and feed failure handling.
+maintenance-validation.yml runs it alongside the existing harness checks.
 
 ## Verified Test Results
 
@@ -35,8 +80,9 @@ and requires separate eligibility/secret configuration; never fall back upstream
 | 3.8.2 | 99ab1ad7b5d47fe3160422b7360e27f6961185d1 | 0a5b6114fdd1d76128438df01ccb09a6f9834c30 |
 | 3.7.0 | a27e03a753cc736080cd4497de77da03bfb1570f | 9bd521186bf9b00a2af4fc920be8c7f87683a012 |
 
-This is NOT end-to-end success or merge readiness. The dispatch credential needs
-appropriate access to the fork, and the provenance mismatch needs an explicitly
+This is NOT end-to-end success or merge readiness. The ADO path still requires a
+dispatch credential with access to the fork; GitHub-only discovery avoids that
+boundary. The provenance mismatch still needs an explicitly
 reviewed resolution. Do not bypass the check, substitute source, change the
 default branch or alter approvals. The baseline diagnostic never replaces the
 failed target evidence. All original PRs and default branches remain unchanged.

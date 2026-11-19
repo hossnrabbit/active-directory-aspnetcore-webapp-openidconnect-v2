@@ -4,19 +4,31 @@ on:
   push:
     branches: [test/idweb-harness-e2e]
     paths: [.github/workflows/release-maintenance.yml]
+  schedule:
+    - cron: '23 7 * * 1-5'
   workflow_dispatch:
     inputs:
+      detect_latest:
+        description: Discover the latest stable UI package instead of using release inputs
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: Report the target without creating an issue or assigning Copilot
+        required: false
+        default: false
+        type: boolean
       package:
         description: Exact cataloged IdWeb package identifier (not MSAL)
-        required: true
+        required: false
         type: string
       version:
         description: Exact published three-part stable IdWeb package version
-        required: true
+        required: false
         type: string
       release_notes_url:
         description: Official IdWeb release URL matching this version
-        required: true
+        required: false
         type: string
       event_key:
         description: Optional coordinator deduplication key
@@ -33,12 +45,12 @@ permissions:
   issues: write
 
 concurrency:
-  group: release-maintenance-${{ inputs.package }}-${{ inputs.version }}
+  group: release-maintenance-test
   cancel-in-progress: false
 
 jobs:
   open-issue:
-    if: ${{ github.event_name == 'workflow_dispatch' && github.repository == 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2' && github.ref == 'refs/heads/test/idweb-harness-e2e' && github.actor == 'hossnrabbit' }}
+    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && github.repository == 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2' && github.ref == 'refs/heads/test/idweb-harness-e2e' && github.actor == 'hossnrabbit' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -46,14 +58,50 @@ jobs:
         with:
           ref: test/idweb-harness-e2e
           persist-credentials: false
-      - name: Create or reuse an exact-release issue
-        id: release-issue
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+      - name: Resolve release target
+        id: target
+        shell: pwsh
         env:
+          DISCOVER_LATEST: ${{ github.event_name == 'schedule' || inputs.detect_latest }}
+          ASSIGN_COPILOT: ${{ inputs.assign_copilot }}
           RELEASE_PACKAGE: ${{ inputs.package }}
           RELEASE_VERSION: ${{ inputs.version }}
           RELEASE_URL: ${{ inputs.release_notes_url }}
           EVENT_KEY: ${{ inputs.event_key }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:DISCOVER_LATEST -eq 'true') {
+            if ($env:ASSIGN_COPILOT -eq 'true') { throw 'Discovery cannot assign Copilot before setup approval.' }
+            if ($env:RELEASE_PACKAGE -or $env:RELEASE_VERSION -or $env:RELEASE_URL -or $env:EVENT_KEY) {
+              throw 'Discovery cannot be combined with manual release inputs.'
+            }
+            $release = ./scripts/Find-MaintenanceRelease.ps1
+            "available=$($release.updateAvailable.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+            "package=$($release.package)" >> $env:GITHUB_OUTPUT
+            "version=$($release.version)" >> $env:GITHUB_OUTPUT
+            "url=$($release.releaseUrl)" >> $env:GITHUB_OUTPUT
+            "Latest stable $($release.package): $($release.version); outdated retained projects: $($release.projects.Count)." >> $env:GITHUB_STEP_SUMMARY
+          } else {
+            if ($env:RELEASE_PACKAGE -cne 'Microsoft.Identity.Web.UI' -or $env:RELEASE_VERSION -cne '3.8.2' -or
+                $env:RELEASE_URL -cne 'https://github.com/AzureAD/microsoft-identity-web/releases/tag/3.8.2') {
+              throw 'Manual release must match the approved UI 3.8.2 target.'
+            }
+            'available=true' >> $env:GITHUB_OUTPUT
+            "package=$env:RELEASE_PACKAGE" >> $env:GITHUB_OUTPUT
+            "version=$env:RELEASE_VERSION" >> $env:GITHUB_OUTPUT
+            "url=$env:RELEASE_URL" >> $env:GITHUB_OUTPUT
+          }
+      - name: Create or reuse an exact-release issue
+        if: ${{ steps.target.outputs.available == 'true' }}
+        id: release-issue
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          RELEASE_PACKAGE: ${{ steps.target.outputs.package }}
+          RELEASE_VERSION: ${{ steps.target.outputs.version }}
+          RELEASE_URL: ${{ steps.target.outputs.url }}
+          EVENT_KEY: ${{ inputs.event_key }}
+          DISCOVER_LATEST: ${{ github.event_name == 'schedule' || inputs.detect_latest }}
+          DRY_RUN: ${{ inputs.dry_run }}
           APPROVED_PACKAGE: Microsoft.Identity.Web.UI
           APPROVED_VERSION: 3.8.2
         with:
@@ -65,7 +113,8 @@ jobs:
             if (!catalog.packages.includes(packageId) || !/^\d+\.\d+\.\d+$/.test(version)) {
               throw new Error('Only cataloged IdWeb packages and exact stable versions are supported.');
             }
-            if (packageId !== process.env.APPROVED_PACKAGE || version !== process.env.APPROVED_VERSION) {
+            if (packageId !== process.env.APPROVED_PACKAGE ||
+              (process.env.DISCOVER_LATEST !== 'true' && version !== process.env.APPROVED_VERSION)) {
               throw new Error('Dispatch must match the administrator-approved Copilot setup package/version.');
             }
             const expectedUrl = `https://github.com/AzureAD/microsoft-identity-web/releases/tag/${version}`;
@@ -79,6 +128,10 @@ jobs:
               throw new Error('Event key does not match this repository/package/version.');
             }
             const marker = `<!-- sample-maintenance:${key} -->`;
+            if (process.env.DRY_RUN === 'true') {
+              core.notice(`Dry run: ${packageId} ${version}; event key ${key}; no issue or assignment.`);
+              return;
+            }
             for await (const page of github.paginate.iterator(github.rest.issues.listForRepo, {
               ...context.repo, state: 'all', per_page: 100
             })) {
@@ -96,6 +149,7 @@ jobs:
               body: [marker,
                 `Evaluate direct references to ${packageId} at exact version ${version}.`,
                 `Official release: ${expectedUrl}`,
+                'Detection is not execution approval. Copilot assignment is off for discovery. A maintainer must approve matching setup and resolve provenance before any source update; otherwise SETUP_BLOCKED. The release tag URL is a candidate until verified by setup.',
                 'Follow AGENTS.md and scripts/maintenance-samples.json. Use sample-implementer with actual read-only planner/reviewer role execution.',
                 'Require ORIGINAL .maintenance-evidence/manifest.json from setup matching this package/version and each original project baseline. Missing or mismatched evidence is SETUP_BLOCKED; never refetch/regenerate it.',
                 'Compare public contracts, implementation, tests and new parameters/defaults/options across both exact IdWeb source revisions. Produce the required scenario-improvement matrix with source/test citations, coverage and candidate dispositions; release notes or compatibility alone are insufficient.',
@@ -108,7 +162,7 @@ jobs:
             core.setOutput('issue-number', issue.data.number);
             core.notice(`Created release issue: ${issue.data.html_url}`);
       - name: Optionally assign Copilot
-        if: ${{ inputs.assign_copilot }}
+        if: ${{ inputs.assign_copilot && !inputs.detect_latest && !inputs.dry_run && steps.release-issue.outputs.issue-number != '' }}
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           RELEASE_ISSUE_NUMBER: ${{ steps.release-issue.outputs.issue-number }}

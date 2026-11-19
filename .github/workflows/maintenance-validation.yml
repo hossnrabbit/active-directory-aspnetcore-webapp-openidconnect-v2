@@ -21,6 +21,9 @@ jobs:
       - name: Offline harness regression checks
         shell: pwsh
         run: ./scripts/Test-Maintenance.ps1
+      - name: Offline release discovery checks
+        shell: pwsh
+        run: ./scripts/Test-MaintenanceRelease.ps1
       - name: Mocked assignment checks (no GitHub mutations)
         run: node --test .github/scripts/assign-maintenance-issue.test.cjs
   build-retained-applications:
