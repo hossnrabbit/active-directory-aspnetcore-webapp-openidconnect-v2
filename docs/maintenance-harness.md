@@ -18,6 +18,29 @@ Copilot's automatic import of custom setup from a non-default branch is NOT
 assumed proven by a successful standalone setup run. Assignment remains optional
 and requires separate eligibility/secret configuration; never fall back upstream.
 
+## Verified Test Results
+
+- Hosted harness validation and all 13 retained application builds passed:
+	https://github.com/hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2/actions/runs/44405120148.
+- ADO pipeline 3154 dry-run 1724129 passed. Its published dispatch-results.json
+	contains exactly this fork, test branch, workflow and Microsoft.Identity.Web.UI
+	3.8.2, with no live dispatch.
+- Live ADO retry 1724909 reached GitHub but received HTTP 403 using the existing
+	dispatch credential. No successful workflow dispatch, release issue,
+	deduplication replay or Copilot session has been demonstrated.
+- Hosted source setup 44405120153 failed closed on both exact versions:
+
+| Version | NuGet Repository Commit | Exact Tag Commit |
+| --- | --- | --- |
+| 3.8.2 | 99ab1ad7b5d47fe3160422b7360e27f6961185d1 | 0a5b6114fdd1d76128438df01ccb09a6f9834c30 |
+| 3.7.0 | a27e03a753cc736080cd4497de77da03bfb1570f | 9bd521186bf9b00a2af4fc920be8c7f87683a012 |
+
+This is NOT end-to-end success or merge readiness. The dispatch credential needs
+appropriate access to the fork, and the provenance mismatch needs an explicitly
+reviewed resolution. Do not bypass the check, substitute source, change the
+default branch or alter approvals. The baseline diagnostic never replaces the
+failed target evidence. All original PRs and default branches remain unchanged.
+
 This opt-in harness belongs to
 Azure-Samples/active-directory-aspnetcore-webapp-openidconnect-v2, targeting master.
 It is a separate change from cleanup PR #831 and can operate on either layout.
