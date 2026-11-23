@@ -1,5 +1,15 @@
 # IdWeb Sample Maintenance Harness
 
+## Retired Test Entry Point
+
+The SDK-specific release entry point on this test branch is retired. Its issue
+job is permanently disabled, its schedule removed, and its token is read-only.
+Use the ONE shared harness in `hossnrabbit/ms-identity-docs-code-dotnet` on
+`test/msal-harness-e2e` for releases from either MSAL.NET or IdWeb. The name of
+that branch is retained for compatibility; it is no longer MSAL-specific.
+The historical integration details below do not activate a second update path.
+Original upstream PRs, default branches, and sample dependencies are unchanged.
+
 ## Test Branch Override
 
 This checkout is an isolated integration test in

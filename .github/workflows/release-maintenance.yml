@@ -1,11 +1,9 @@
-name: Release maintenance issue
+name: Release maintenance issue (retired)
 
 on:
   push:
     branches: [test/idweb-harness-e2e]
     paths: [.github/workflows/release-maintenance.yml]
-  schedule:
-    - cron: '23 7 * * 1-5'
   workflow_dispatch:
     inputs:
       detect_latest:
@@ -42,15 +40,20 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: release-maintenance-test
   cancel-in-progress: false
 
 jobs:
+  use-shared-harness:
+    if: ${{ github.repository == 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2' && github.ref == 'refs/heads/test/idweb-harness-e2e' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Point to the single shared harness
+        run: echo 'This test entry point is retired. Use Release maintenance issue in hossnrabbit/ms-identity-docs-code-dotnet on test/msal-harness-e2e for either MSAL.NET or IdWeb.' >> "$GITHUB_STEP_SUMMARY"
   open-issue:
-    if: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && github.repository == 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2' && github.ref == 'refs/heads/test/idweb-harness-e2e' && github.actor == 'hossnrabbit' }}
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
