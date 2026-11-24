@@ -18,10 +18,33 @@ source commits. A disposable coordinated package build restores original project
 bytes before the implementer starts. No SDK build scripts/tests or live app flows run.
 
 The implementer must obtain an actual source-backed planner READY, apply the
-scoped updates, build against ORIGINAL coordinated evidence, and obtain independent
-review on the actual candidate. Standalone setup success does not prove agent import,
-review, or a completed upgrade. Missing gates remain BLOCKED/PARTIAL.
+scoped updates, and build against ORIGINAL coordinated evidence. It then publishes
+the candidate for native GitHub Copilot code review, without a custom reviewer
+subagent or a review-retry loop. Standalone setup success does not prove agent
+import or candidate validation. Missing implementation gates remain BLOCKED/PARTIAL;
+native PR review status is reported separately.
 No schedule, automatic assignment, default branch or upstream changes are enabled.
+
+## Native Copilot PR Review
+
+The active repository ruleset "Maintenance PRs - automatic Copilot code review"
+targets PRs whose base is test/idweb-harness-e2e. It requests Copilot review for
+draft PRs and every new push. Verify the effective rule before claiming automatic
+review is enabled:
+
+https://github.com/hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2/rules/28016625
+
+Enabling the rule is not evidence that an existing PR has been reviewed. For an
+existing PR without a request or completed review, request native review once:
+
+```powershell
+gh pr edit 1 -R hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 --add-reviewer '@copilot'
+```
+
+Include exact old/new SDK source links, compatibility findings, candidate revision
+and actual build results in the PR. Keep review requested, review completed,
+findings resolved and human merge approval distinct. Do not enable Copilot
+auto-approval or auto-merge, weaken required checks, or approve workflow runs.
 
 ## Historical Single-Package Discovery
 
@@ -145,8 +168,9 @@ The immutable manifest records original project references/frameworks, package
 hashes, source commits and full src/tests comparison hashes per baseline. The
 planner reads bounded relevant source/contracts/tests and discovers improvements
 across the entire range. The implementer applies only justified scoped edits and
-invokes the independent read-only reviewer. AGENTS.md defines the required matrix,
-role handoffs, one-repair/two-review budget and blocked/partial outcomes. Manifest
+publishes the validated candidate for native GitHub Copilot PR review. AGENTS.md
+defines the required compatibility matrix, planner handoff and implementation
+blocked/partial outcomes; no custom reviewer or custom review-pass budget applies. Manifest
 immutability is checked for accidental changes; it is not a cryptographic sandbox
 against an agent able to edit its own workspace. Human diff review remains required.
 
