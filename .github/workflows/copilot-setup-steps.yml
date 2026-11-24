@@ -1,0 +1,66 @@
+name: Copilot setup steps
+
+on:
+  push:
+    branches: [test/idweb-harness-e2e]
+    paths: [.github/workflows/copilot-setup-steps.yml]
+  workflow_dispatch:
+  pull_request:
+    paths: [.github/workflows/copilot-setup-steps.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@55ec9447dda3d1cf6bd587150f3262f30ee10815 # v3.4.2
+        with:
+          dotnet-version: |
+            8.x
+            9.x
+      - name: Offline harness regression checks
+        shell: pwsh
+        run: ./scripts/Test-Maintenance.ps1
+      - name: Prepare original latest stable IdWeb family evidence
+        id: source-evidence
+        shell: pwsh
+        run: |
+          if ('${{ github.repository }}' -cne 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2') { throw 'Wrong sample destination.' }
+          ./scripts/Get-IdWebSourceEvidence.ps1 -CoordinatedLatest
+          $manifest = Join-Path $PWD '.maintenance-evidence/coordinated-manifest.json'
+          ./scripts/Validate-Maintenance.ps1 -CoordinatedManifest $manifest -SetupCheck
+          git check-ignore --quiet .maintenance-evidence/coordinated-manifest.json
+          if ($LASTEXITCODE -ne 0) { throw 'Source evidence must remain ignored.' }
+          "MAINTENANCE_COORDINATED_MANIFEST=$manifest" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $evidence = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
+          $evidence.packages | Select-Object package, targetVersion, applicability | Format-Table -AutoSize
+      - name: Disposable coordinated package build smoke
+        shell: pwsh
+        run: |
+          . ./scripts/Maintenance.Common.ps1
+          $catalog = Get-MaintenanceCatalog
+          $evidence = Get-Content -LiteralPath $env:MAINTENANCE_COORDINATED_MANIFEST -Raw | ConvertFrom-Json
+          $versions = @{}
+          foreach ($entry in @($evidence.packages | Where-Object selected)) { $versions[$entry.package] = $entry.targetVersion }
+          $original = @{}
+          try {
+            foreach ($path in $catalog.projects) {
+              $original[$path] = [IO.File]::ReadAllBytes((Join-Path $PWD $path))
+              [xml] $project = Get-Content -LiteralPath $path -Raw
+              foreach ($reference in $project.SelectNodes('//PackageReference')) {
+                if ($versions.ContainsKey($reference.Include) -and [version]$reference.Version -lt [version]$versions[$reference.Include]) { $reference.SetAttribute('Version', $versions[$reference.Include]) }
+              }
+              $project.Save((Join-Path $PWD $path))
+            }
+            ./scripts/Validate-Maintenance.ps1 -CoordinatedManifest $env:MAINTENANCE_COORDINATED_MANIFEST -Build
+          } finally {
+            foreach ($path in $original.Keys) { [IO.File]::WriteAllBytes((Join-Path $PWD $path), $original[$path]) }
+          }
+          ./scripts/Validate-Maintenance.ps1 -CoordinatedManifest $env:MAINTENANCE_COORDINATED_MANIFEST -SetupCheck
+          if (@(git status --porcelain).Count) { throw 'Trusted setup left tracked/untracked sample changes.' }
