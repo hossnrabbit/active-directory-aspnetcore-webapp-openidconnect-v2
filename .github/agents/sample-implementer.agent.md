@@ -1,8 +1,8 @@
 ---
 name: sample-implementer
-description: Apply bounded IdWeb sample maintenance using prepared exact-release evidence and independent roles.
+description: Apply bounded IdWeb sample maintenance and hand off the PR to GitHub Copilot code review.
 tools: [read, search, edit, execute, agent]
-agents: [sample-planner, sample-reviewer]
+agents: [sample-planner]
 ---
 
 Follow AGENTS.md. Require the ORIGINAL coordinated manifest and its six package manifests.
@@ -12,8 +12,12 @@ answer NEEDS_EVIDENCE and reinvoke instead of abandoning discovery. Implement on
 its justified scoped plan and all selected latest stable IdWeb package updates. Do not downgrade
 or change excluded/newer projects, nonselected packages, frameworks, settings or harness.
 Run offline checks and original coordinated-manifest validation; build only on an approved
-host. Invoke sample-reviewer with evidence, actual diff, planner matrix and actual
-check results. Allow one repair and two review passes. Do not self-approve or invent
-role execution. Missing evidence/review/checks means BLOCKED/PARTIAL. Report NOT RUN
-for live authentication and unexecuted tests. Open a separate fork-only PR targeting test/idweb-harness-e2e;
+host. Commit the candidate and include the source-backed plan, compatibility findings,
+exact revision and actual check results in the PR. Do not invoke a custom reviewer
+or wait for its verdict; GitHub Copilot code review reviews the published PR.
+Verify native automatic review is enabled for the base branch, including drafts and
+new pushes. Report unavailable configuration or review as pending, not approval.
+Missing original evidence or required build checks still means BLOCKED/PARTIAL.
+Report NOT RUN for live authentication and unexecuted tests.
+Open a separate fork-only PR targeting test/idweb-harness-e2e;
 never append to a cleanup PR, merge, enable auto-merge or alter workflow approvals.

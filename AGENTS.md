@@ -37,13 +37,22 @@ download SDK/packages, or fabricate an original baseline from edited files.
 Tags are advisory, never substitute for NuGet's commit. No fallback to SDK main
 or release notes alone. Do not commit evidence.
 
-Use the sample-implementer custom agent. It must actually invoke sample-planner
-before edits and sample-reviewer after validation. Both are read-only and must
-receive the actual sample paths, original manifest, target, and relevant bounded
-source/diff excerpts. A self-review or prose claim is not independent review.
+Use the sample-implementer custom agent. It must actually invoke the read-only
+sample-planner before edits with the actual sample paths, original manifest,
+target, and relevant bounded source/diff excerpts. GitHub Copilot code review
+reviews the published PR; do not invoke a separate custom reviewer subagent.
 NEEDS_EVIDENCE requests must be answered from the original prepared sources/diffs
-and the role reinvoked. Allow at most one repair and two review passes; unresolved
-findings or unavailable role tools mean BLOCKED, not permission to bypass review.
+and the planner reinvoked. Missing required implementation evidence or planner
+tools means BLOCKED, not permission to skip compatibility discovery.
+
+Before publishing, verify an active native Copilot automatic-review rule applies
+to the PR base branch with draft reviews and review-on-push enabled. Include exact
+baseline/target SDK source links, compatibility findings, candidate commit/tree
+and build results in the PR so code review can inspect the evidence. Native review
+is asynchronous: create the validated version-bump PR without a custom review
+loop, report review as requested/pending/completed accurately, and leave findings
+for the normal PR review process. Missing review configuration must be reported;
+never claim a review request or an empty review is approval to merge.
 
 Map EACH selected scenario's actual calls first. Investigate corresponding public
 contracts, implementation and tests at BOTH exact IdWeb revisions. Cover added
@@ -73,7 +82,8 @@ host. SetupCheck validates pristine originals only, never the candidate. Require
 in maintenance-validation.yml. The existing .NET workflow is unchanged.
 Static checks cannot prove builds, authentication, token caching, authorization,
 Graph calls or conditional-access challenges. Report each unrun check as NOT RUN.
-Missing required checks or independent review yield PARTIAL/BLOCKED, not SUCCESS.
+Missing required implementation checks yield PARTIAL/BLOCKED, not SUCCESS.
+Native Copilot review status is reported separately from implementation/build status.
 
 For each project report original/target versions, disposition, evidence and
 discovery matrix, actual checks, reviewer findings and remaining manual tests.
