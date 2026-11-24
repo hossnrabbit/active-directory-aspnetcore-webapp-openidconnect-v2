@@ -40,6 +40,7 @@ Assert-True (@($newer | Where-Object status -NE 'newer').Count -eq 0) 'Downgrade
 $updates = @(Get-MaintenanceSelection -Package Microsoft.Identity.Web.UI -TargetVersion '99.0.0')
 Assert-True (@($updates | Where-Object status -NE 'update').Count -eq 0) 'New release classification mismatch.'
 & (Join-Path $PSScriptRoot 'Validate-Maintenance.ps1')
+Assert-Throws { & (Join-Path $PSScriptRoot 'Validate-Maintenance.ps1') -SetupCheck } '*SetupCheck requires original evidence*'
 Assert-Throws { & (Join-Path $PSScriptRoot 'Validate-Maintenance.ps1') -ExpectedVersion '3.7.0' } '*requires the original evidence*'
 Assert-Throws { & (Join-Path $PSScriptRoot 'Get-IdWebSourceEvidence.ps1') -Package Microsoft.Identity.Client -TargetVersion '4.91.1' } '*Only cataloged direct IdWeb*'
 $scratch = Join-Path ([IO.Path]::GetTempPath()) ('idweb-maintenance-' + [guid]::NewGuid())
@@ -84,8 +85,6 @@ try {
     $commit = (& git -C $sources rev-parse HEAD).Trim()
     $originals = @(Get-MaintenanceSelection -Package Microsoft.Identity.Web -TargetVersion '99.0.0' | ForEach-Object originalVersion | Sort-Object { [version]$_ })
     $target = $originals[0]
-    & git -C $sources tag $target
-    if ($LASTEXITCODE -ne 0) { throw 'Cannot tag synthetic source fixture.' }
     $packagePath = Join-Path $scratch 'synthetic-package.txt'
     $diffPath = Join-Path $scratch 'synthetic-comparison.diff'
     Set-Content -LiteralPath $packagePath -Value 'Synthetic hash fixture; not a NuGet package.'
@@ -93,6 +92,7 @@ try {
     $manifestPath = Join-Path $scratch 'synthetic-manifest.json'
     $manifest = [ordered]@{
         schemaVersion = 1
+        sourceProvenance = 'nuget-commit'
         repository = 'https://github.com/AzureAD/microsoft-identity-web.git'
         package = 'Microsoft.Identity.Web'
         targetVersion = $target
@@ -110,9 +110,52 @@ try {
     Set-Content -LiteralPath $diffPath -Value 'Changed comparison'
     Assert-Throws { & $validator -EvidenceManifest $manifestPath -ExpectedVersion $target } '*comparison changed or is missing*'
     Set-Content -LiteralPath $diffPath -Value '' -NoNewline
+    $coordinatedEntries = @(foreach ($packageId in $catalog.packages) {
+        $selected = @(Get-MaintenanceSelection -Package $packageId -TargetVersion '99.0.0')
+        $baselines = @($selected.originalVersion | Sort-Object -Unique)
+        $indexPath = Join-Path $scratch "$packageId-index.json"
+        @{ versions = @($baselines) + @('99.0.0', '100.0.0-preview') } | ConvertTo-Json | Set-Content -LiteralPath $indexPath
+        $packageManifestPath = Join-Path $scratch "$packageId-manifest.json"
+        $packageManifest = [ordered]@{
+            schemaVersion = 1
+            sourceProvenance = 'nuget-commit'
+            repository = 'https://github.com/AzureAD/microsoft-identity-web.git'
+            package = $packageId
+            targetVersion = '99.0.0'
+            samples = $selected
+            releases = @(@($baselines) + @('99.0.0') | ForEach-Object {
+                [ordered]@{ version = $_; commit = $commit; sourcePath = $sources; packagePath = $packagePath; packageSha256 = (Get-FileHash -LiteralPath $packagePath).Hash }
+            })
+            comparisons = @($baselines | ForEach-Object {
+                [ordered]@{ baselineVersion = $_; targetVersion = '99.0.0'; path = $diffPath; sha256 = (Get-FileHash -LiteralPath $diffPath).Hash }
+            })
+        }
+        $packageManifest | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $packageManifestPath
+        [ordered]@{ package = $packageId; targetVersion = '99.0.0'; selected = $true; indexPath = $indexPath; indexSha256 = (Get-FileHash -LiteralPath $indexPath).Hash; manifestPath = $packageManifestPath; manifestSha256 = (Get-FileHash -LiteralPath $packageManifestPath).Hash }
+    })
+    $coordinatedPath = Join-Path $scratch 'coordinated-manifest.json'
+    $coordinatedFixture = [ordered]@{
+        schemaVersion = 1
+        sourceProvenance = 'nuget-commit'
+        destination = 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2'
+        packages = $coordinatedEntries
+    }
+    $coordinatedFixture | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $coordinatedPath
+    & $validator -CoordinatedManifest $coordinatedPath -SetupCheck
+    Assert-Throws { & $validator -CoordinatedManifest $coordinatedPath } '*Package changes are outside*'
+    Assert-Throws { & $validator -CoordinatedManifest $coordinatedPath -SetupCheck -Build } '*SetupCheck cannot stand in*'
+    $coordinatedFixture.destination = 'hossnrabbit/ms-identity-docs-code-dotnet'
+    $coordinatedFixture | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $coordinatedPath
+    Assert-Throws { & $validator -CoordinatedManifest $coordinatedPath -SetupCheck } '*destination/provenance*'
+    $coordinatedFixture.destination = 'hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2'
+    $coordinatedFixture | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $coordinatedPath
+    Add-Content -LiteralPath $coordinatedEntries[0].indexPath -Value ' '
+    Assert-Throws { & $validator -CoordinatedManifest $coordinatedPath -SetupCheck } '*latest-version index changed*'
+    Write-Host 'PASS: coordinated latest scope, pristine setup, required update/build separation, wrong destination and index tampering.'
     Set-Content -LiteralPath (Join-Path $sources 'unexpected.txt') -Value 'Untracked source mutation'
     Assert-Throws { & $validator -EvidenceManifest $manifestPath -ExpectedVersion $target } '*source evidence is not immutable*'
     Assert-Throws { & $validator -Build } '*Offline tests prohibit builds/restores*'
     Write-Host 'PASS: synthetic evidence validation, mismatched target, package/diff/source tampering, and required build failure.'
 } finally { Remove-Item -LiteralPath $scratch -Recurse -Force }
 Write-Host 'PASS: IdWeb catalog, retired-project exclusions, package routing, exact versions, and no-downgrade classification. Builds/downloads/sign-in: NOT RUN.'
+exit 0

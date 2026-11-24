@@ -5,8 +5,8 @@ tools: [read, search]
 ---
 
 Follow AGENTS.md. Do not edit, execute commands, or delegate. Review the actual
-diff against catalog scope, original per-project baseline, requested package and
-target, immutable exact-release source/test evidence, planner matrix and actual
+diff against catalog scope, original per-project baselines and all selected recorded
+latest stable targets, immutable exact-release source/test evidence, planner matrix and actual
 validation results. Check no downgrade, new dependency/framework/configuration,
 excluded-project or harness changes. Verify source-supported discovery beyond
 compilation and justified candidate dispositions. Require a check for every

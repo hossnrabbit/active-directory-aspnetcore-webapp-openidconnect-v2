@@ -1,40 +1,32 @@
 # IdWeb Sample Maintenance Harness
 
-## Retired Test Entry Point
+## Approved Latest Upgrade
 
-The SDK-specific release entry point on this test branch is retired. Its issue
-job is permanently disabled, its schedule removed, and its token is read-only.
-Use the ONE shared harness in `hossnrabbit/ms-identity-docs-code-dotnet` on
-`test/msal-harness-e2e` for releases from either MSAL.NET or IdWeb. The name of
-that branch is retained for compatibility; it is no longer MSAL-specific.
-The historical integration details below do not activate a second update path.
-Original upstream PRs, default branches, and sample dependencies are unchanged.
+The only authorized destination is
+hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2. Reuse the existing
+harness on test/idweb-harness-e2e; do not redirect work to console/docs-code samples.
+The maintainer approved a PR updating all existing direct IdWeb packages together
+to their latest stable official NuGet versions. All thirteen retained apps currently
+use IdWeb 3.7.0. No retained project directly references Microsoft.Identity.Client;
+MSAL's latest version is recorded separately, not injected as a new dependency.
 
-## Test Branch Override
+Trusted hosted setup uses Get-IdWebSourceEvidence.ps1 -CoordinatedLatest and
+Validate-Maintenance.ps1 -CoordinatedManifest <original-manifest> -SetupCheck.
+It records hash-bound official version indexes and per-package original manifests,
+downloads exact official NuGet archives, and fetches their full recorded IdWeb
+source commits. A disposable coordinated package build restores original project
+bytes before the implementer starts. No SDK build scripts/tests or live app flows run.
 
-This checkout is an isolated integration test in
-hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 on
-test/idweb-harness-e2e. The upstream deployment instructions below describe the
-original harness PR, not this test's activation. Only hossnrabbit may dispatch
-this branch. Manual execution remains pinned to Microsoft.Identity.Web.UI 3.8.2;
-discovery may report newer stable UI releases without approving execution.
-The companion ADO branch is test/idweb-pipeline-e2e in
-IdentityDivision/DevEx/msal-sdk-sample-maintenance. Its only enabled destination
-is this fork/test branch. Push runs the hosted harness checks and exact source
-setup; it does not create an issue or assign Copilot. The release workflow also
-has a branch-scoped push registration event whose issue job is deliberately
-skipped; test-branch issue creation requires workflow_dispatch. No default branch,
-upstream PR, secret, actor variable or approval policy is changed for this test.
-Copilot's automatic import of custom setup from a non-default branch is NOT
-assumed proven by a successful standalone setup run. Assignment remains optional
-and requires separate eligibility/secret configuration; never fall back upstream.
+The implementer must obtain an actual source-backed planner READY, apply the
+scoped updates, build against ORIGINAL coordinated evidence, and obtain independent
+review on the actual candidate. Standalone setup success does not prove agent import,
+review, or a completed upgrade. Missing gates remain BLOCKED/PARTIAL.
+No schedule, automatic assignment, default branch or upstream changes are enabled.
 
-## GitHub-Only Discovery Test
+## Historical Single-Package Discovery
 
-MSAL.NET discovery is separate: `hossnrabbit/ms-identity-docs-code-dotnet` on
-`test/msal-harness-e2e` checks `Microsoft.Identity.Client` against its five
-direct-MSAL samples. This fork checks `Microsoft.Identity.Web.UI`; do not route
-MSAL releases into IdWeb updates or add direct MSAL references here.
+The older issue-creation job remains disabled. The commands below describe its
+historical single-package dry runs, not the coordinated latest upgrade path.
 
 Run release-maintenance.yml against test/idweb-harness-e2e with
 detect_latest=true and dry_run=true. Leave package, version, release_notes_url
@@ -142,13 +134,12 @@ may require maintainer approval; their existence is not proof they ran.
 
 ## Evidence And Execution
 
-Copilot setup runs offline checks and, only for the configured exact package/version,
-downloads official NuGet archives and fetches the exact IdWeb version tags into
-ignored .maintenance-evidence. It does NOT run SDK code or authenticate to a tenant.
-NuGet repository commit metadata must equal the corresponding tag commit for both
-the target and every applicable baseline. A missing historical tag or mismatch
-blocks the ENTIRE setup; this initial harness deliberately has no partial-baseline
-fallback. Preview/floating versions, SDK main and source substitution are unsupported.
+Copilot setup runs offline checks, discovers exact latest stable versions, downloads
+official NuGet archives and fetches their recorded full IdWeb commits into ignored
+.maintenance-evidence. It does NOT run SDK code or authenticate to a tenant.
+NuGet package identity, official source URL, full commit and SHA256 are required
+for target and baseline. Tags are advisory, never a substitute or blocker when a
+verified NuGet commit exists. Preview/floating versions and SDK main are unsupported.
 
 The immutable manifest records original project references/frameworks, package
 hashes, source commits and full src/tests comparison hashes per baseline. The
@@ -169,7 +160,7 @@ Run offline checks with PowerShell 7:
 An actual update additionally requires ORIGINAL evidence validation:
 
 ```powershell
-./scripts/Validate-Maintenance.ps1 -EvidenceManifest .maintenance-evidence/manifest.json -ExpectedVersion <exact-version>
+./scripts/Validate-Maintenance.ps1 -CoordinatedManifest $env:MAINTENANCE_COORDINATED_MANIFEST -Build
 ```
 
 Only on an approved hosted build machine, add -Build to build all 13 retained
