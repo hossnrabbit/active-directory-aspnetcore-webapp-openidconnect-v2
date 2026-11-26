@@ -21,3 +21,8 @@ Missing original evidence or required build checks still means BLOCKED/PARTIAL.
 Report NOT RUN for live authentication and unexecuted tests.
 Open a separate fork-only PR targeting test/idweb-harness-e2e;
 never append to a cleanup PR, merge, enable auto-merge or alter workflow approvals.
+Use a short title listing changed SDKs/packages and versions. Put the concise change
+summary, source evidence, checks and remaining gaps in the PR description only.
+Do not post maintenance status, audit, handoff or change-summary comments, or append
+original prompts and execution transcripts. Leave native Copilot review comments
+and normal review discussion unchanged.

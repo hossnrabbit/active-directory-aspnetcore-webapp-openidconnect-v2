@@ -11,5 +11,9 @@ role is required. Keep build validation and human merge approval separate.
 For code review, check the selected dependency versions and existing sample calls
 against the exact old/new SDK source links and compatibility findings in the PR.
 Check signature/default changes and successful, error and cancellation paths.
+Explicitly review added, removed or changed exception types, throw conditions,
+error codes and cancellation propagation against both revisions' source and tests.
+Verify any required catch/filter, retry or authentication-challenge handling changes
+and their focused checks; flag missing exception-path evidence as a review gap.
 Do not infer runtime compatibility solely from a successful build or treat an
 unexamined SDK path as evidence that no source change is needed.

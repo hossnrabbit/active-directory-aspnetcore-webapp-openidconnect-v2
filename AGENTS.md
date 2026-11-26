@@ -50,8 +50,8 @@ to the PR base branch with draft reviews and review-on-push enabled. Include exa
 baseline/target SDK source links, compatibility findings, candidate commit/tree
 and build results in the PR so code review can inspect the evidence. Native review
 is asynchronous: create the validated version-bump PR without a custom review
-loop, report review as requested/pending/completed accurately, and leave findings
-for the normal PR review process. Missing review configuration must be reported;
+loop and leave findings for the normal PR review process. Keep necessary review
+configuration caveats in the PR description, not separate status comments;
 never claim a review request or an empty review is approval to merge.
 
 Map EACH selected scenario's actual calls first. Investigate corresponding public
@@ -61,6 +61,13 @@ downstream token acquisition and challenge handling where actually relevant.
 Do not apply web-app guidance to APIs indiscriminately. Inspect Graph adapter
 differences using the selected package's own source. Never treat transitive MSAL
 release behavior as an IdWeb package release contract.
+
+Explicitly compare added, removed or changed exception types, throw conditions,
+error codes and cancellation propagation on each selected sample's exercised paths.
+Identify any required catch/filter, retry or authentication-challenge handling changes
+using source and test evidence from BOTH revisions. Record the disposition and a
+focused check in the scenario-improvement matrix. Missing exception-path evidence
+requires NEEDS_EVIDENCE, not an assumption that existing error handling is compatible.
 
 Produce a scenario-improvement matrix with: project, baseline/target commits,
 API family/candidate, source and test paths/symbols, baseline-to-target change,
@@ -83,10 +90,14 @@ in maintenance-validation.yml. The existing .NET workflow is unchanged.
 Static checks cannot prove builds, authentication, token caching, authorization,
 Graph calls or conditional-access challenges. Report each unrun check as NOT RUN.
 Missing required implementation checks yield PARTIAL/BLOCKED, not SUCCESS.
-Native Copilot review status is reported separately from implementation/build status.
+Do not post maintenance status, audit, handoff or change-summary comments on the PR.
+Native Copilot review comments and normal review discussion are unaffected.
 
-For each project report original/target versions, disposition, evidence and
-discovery matrix, actual checks, reviewer findings and remaining manual tests.
+Use a short PR title listing only changed SDKs/packages and versions, for example
+"IdWeb: 3.7.0 -> 4.18.0". Keep the description concise: changed versions and scope,
+relevant exact-source links, actual checks and unresolved compatibility/test gaps.
+Keep detailed discovery evidence in the description only when necessary; do not
+append original prompts, execution transcripts or repeated review-status updates.
 TEST FORK ONLY: open a new PR inside
 hossnrabbit/active-directory-aspnetcore-webapp-openidconnect-v2 against
 test/idweb-harness-e2e from its own branch. Never target upstream or master and

@@ -9,6 +9,10 @@ coordinated manifest, all selected package manifests and both exact IdWeb source
 then inspect the relevant public contracts, implementations, tests and prepared
 baseline-to-target diffs. Discover new parameters, defaults, overloads, options,
 deprecations and behavioral changes beyond calls already used by the sample.
+Explicitly compare added, removed or changed exception types, throw conditions,
+error codes and cancellation propagation. Identify required changes to the sample's
+catch/filter, retry or authentication-challenge handling, with source/test evidence
+from both revisions, a scoped disposition and focused validation for each finding.
 Return the required scenario-improvement matrix, concrete scoped plan, coverage,
 gaps and validation requirements. Cite source paths/symbols from both revisions.
 Do not substitute release notes, SDK main or direct MSAL guidance for evidence.
