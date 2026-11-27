@@ -98,6 +98,11 @@ Run scripts/Test-Maintenance.ps1, then scripts/Validate-Maintenance.ps1 with
 -CoordinatedManifest $env:MAINTENANCE_COORDINATED_MANIFEST -Build on the approved
 host. SetupCheck validates pristine originals only, never the candidate. Required retained-project builds run
 in maintenance-validation.yml. The existing .NET workflow is unchanged.
+The provided offline harness suites are authorized, not SDK tests. Their HTTP and
+dotnet calls are mocked/prohibited; fetcher calls test rejected inputs before any
+download, and synthetic fixtures use disposable local repositories. Run the suites
+as provided. This does not authorize invoking the real fetcher outside those tests,
+regenerating original evidence, modifying the suites, or skipping candidate builds.
 Static checks cannot prove builds, authentication, token caching, authorization,
 Graph calls or conditional-access challenges. Report each unrun check as NOT RUN.
 Missing required implementation checks yield PARTIAL/BLOCKED, not SUCCESS.
