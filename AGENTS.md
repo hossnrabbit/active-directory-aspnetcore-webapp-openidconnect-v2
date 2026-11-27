@@ -69,6 +69,17 @@ using source and test evidence from BOTH revisions. Record the disposition and a
 focused check in the scenario-improvement matrix. Missing exception-path evidence
 requires NEEDS_EVIDENCE, not an assumption that existing error handling is compatible.
 
+Bound compatibility discovery to the selected IdWeb packages. Distinguish an
+IdWeb contract or implementation change from an external Graph/MSAL behavior
+whose implementation is not in the prepared IdWeb trees. After comparing both
+IdWeb revisions, record unresolved external behavior and missing runtime tests as
+DEFER / NOT RUN with the exact boundary and risk; do not claim compatibility or
+change catch/filter/retry logic speculatively. Those gaps alone do not block the
+verified IdWeb Version updates. Missing original package provenance, an unresolved
+IdWeb change requiring a sample repair, or failed candidate validation/builds still
+blocks publication. Return a concrete package-update plan with these gaps instead
+of an empty PR. A package-only candidate with gaps is PARTIAL, not fully validated.
+
 Produce a scenario-improvement matrix with: project, baseline/target commits,
 API family/candidate, source and test paths/symbols, baseline-to-target change,
 benefit/tradeoff, IMPLEMENT / DEFER / NOT_APPLICABLE disposition, concrete edit,
