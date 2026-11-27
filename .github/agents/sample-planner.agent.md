@@ -13,6 +13,13 @@ Explicitly compare added, removed or changed exception types, throw conditions,
 error codes and cancellation propagation. Identify required changes to the sample's
 catch/filter, retry or authentication-challenge handling, with source/test evidence
 from both revisions, a scoped disposition and focused validation for each finding.
+Separate missing IdWeb change evidence from unverified external Graph/MSAL
+implementation or runtime behavior. Compare the IdWeb boundary in both revisions;
+record external uncertainty as DEFER / NOT RUN, not proof of compatibility and not
+a blanket stop for verified IdWeb Version updates. Do not propose speculative
+exception-handling edits. Block an unresolved IdWeb change that requires a sample
+repair. Otherwise return a concrete package-update plan and explicit residual
+risks; a package-only candidate with those gaps is PARTIAL.
 Return the required scenario-improvement matrix, concrete scoped plan, coverage,
 gaps and validation requirements. Cite source paths/symbols from both revisions.
 Do not substitute release notes, SDK main or direct MSAL guidance for evidence.
