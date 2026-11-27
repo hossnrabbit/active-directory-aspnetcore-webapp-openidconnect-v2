@@ -23,6 +23,11 @@ Run offline checks and original coordinated-manifest validation; build only on a
 host. Commit the candidate and include the source-backed plan, compatibility findings,
 exact revision and actual check results in the PR. Do not invoke a custom reviewer
 or wait for its verdict; GitHub Copilot code review reviews the published PR.
+Run the provided Test-Maintenance.ps1 and Test-MaintenanceRelease.ps1 suites:
+they prohibit/mock network and dotnet calls and exercise rejected fetcher inputs
+with disposable local fixtures. These authorized harness tests do not regenerate
+original evidence and are not prohibited SDK tests. Do not skip them or the
+subsequent original-manifest candidate -Build check.
 Verify native automatic review is enabled for the base branch, including drafts and
 new pushes. Report unavailable configuration or review as pending, not approval.
 Missing original evidence or required build checks still means BLOCKED/PARTIAL.
